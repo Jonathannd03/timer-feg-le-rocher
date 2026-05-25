@@ -76,7 +76,7 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
       .then((r) => r.json())
       .then((list: VerseItem[]) => setVerseList(list))
       .catch(() => setVerseList([]));
-  }, [verse?.verseId, verse?.bibleId]);
+  }, [open, verse?.verseId, verse?.bibleId]);
 
   // ── Prefetch adjacent verses (DE + FR) in background ─────────────────────
   useEffect(() => {
