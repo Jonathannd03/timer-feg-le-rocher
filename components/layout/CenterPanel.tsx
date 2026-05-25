@@ -3,10 +3,6 @@
 import { useState, useEffect } from "react";
 import { Maximize2 } from "lucide-react";
 import { useServiceStore } from "@/store/serviceStore";
-import { useTimer } from "@/hooks/useTimer";
-import { useKeyboard } from "@/hooks/useKeyboard";
-import { useBroadcastSender } from "@/hooks/useBroadcast";
-import { useWakeLock } from "@/hooks/useWakeLock";
 import { TimerDisplay } from "@/components/timer/TimerDisplay";
 import { TimerControls } from "@/components/timer/TimerControls";
 import { TimerFullscreen } from "@/components/timer/TimerFullscreen";
@@ -14,17 +10,11 @@ import { BibleModule } from "@/components/bible/BibleModule";
 import { VerseFullscreen } from "@/components/bible/VerseFullscreen";
 
 export function CenterPanel() {
-  useTimer();
-  useKeyboard();
-  useBroadcastSender();
-
   const sections     = useServiceStore((s) => s.sections);
   const currentIndex = useServiceStore((s) => s.currentIndex);
   const remaining    = useServiceStore((s) => s.remaining);
   const timerStatus  = useServiceStore((s) => s.timerStatus);
   const currentVerse = useServiceStore((s) => s.currentVerse);
-
-  useWakeLock(timerStatus === "running" || timerStatus === "overtime");
 
   const [timerFs, setTimerFs] = useState(false);
   const [verseFs, setVerseFs] = useState(false);
@@ -52,8 +42,8 @@ export function CenterPanel() {
     <>
       <main className="flex-1 flex flex-col min-w-0 h-full">
 
-        {/* ── Timer panel — 65% on mobile, 50% on desktop ── */}
-        <div className="flex-[13] lg:flex-1 flex flex-col min-h-0 border-b border-white/[0.05] px-3 py-3 lg:px-5 lg:py-4">
+        {/* ── Timer panel — full height on mobile, 50% on desktop ── */}
+        <div className="flex-1 flex flex-col min-h-0 border-b lg:border-b border-white/[0.05] px-3 py-3 lg:px-5 lg:py-4">
 
           {/* Header row — single line, never grows */}
           <div className="flex items-center justify-between mb-3 flex-shrink-0 gap-3 min-h-0">
@@ -84,7 +74,12 @@ export function CenterPanel() {
               )}
               <button
                 onClick={() => setTimerFs(true)}
-                className="w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.07] text-[#3E4560] hover:text-[#EEEEFF] hover:bg-white/[0.08] transition-all"
+                className={[
+                  "w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center border transition-all",
+                  timerStatus === "running" || timerStatus === "overtime"
+                    ? "bg-[#3D72F6]/20 border-[#3D72F6]/50 text-[#3D72F6] hover:bg-[#3D72F6]/30 hover:text-white shadow-[0_0_10px_rgba(61,114,246,0.3)]"
+                    : "bg-white/[0.04] border-white/[0.07] text-[#3E4560] hover:text-[#EEEEFF] hover:bg-white/[0.08]",
+                ].join(" ")}
                 title="Timer Vollbild (F)"
               >
                 <Maximize2 size={13} />
@@ -108,7 +103,7 @@ export function CenterPanel() {
               </span>
             </div>
 
-            <div className="flex-shrink-0 scale-[0.78] sm:scale-[0.88] lg:scale-100 origin-center">
+            <div className="flex-shrink-0 scale-[0.88] sm:scale-[0.95] lg:scale-100 origin-center">
               <TimerDisplay remaining={remaining} totalDuration={total} status={timerStatus} />
             </div>
             <div className="flex-shrink-0">
@@ -134,8 +129,8 @@ export function CenterPanel() {
           </div>
         </div>
 
-        {/* ── Bible panel — 35% on mobile, 50% on desktop ── */}
-        <div className="flex-[7] lg:flex-1 flex flex-col min-h-0 px-3 py-3 lg:px-5 lg:py-4">
+        {/* ── Bible panel — desktop only; mobile has its own tab ── */}
+        <div className="hidden lg:flex flex-1 flex-col min-h-0 px-5 py-4">
 
           {/* Header row */}
           <div className="flex items-center justify-between mb-3 flex-shrink-0">
@@ -145,7 +140,12 @@ export function CenterPanel() {
             <button
               onClick={() => setVerseFs(true)}
               disabled={!currentVerse}
-              className="w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center bg-white/[0.04] border border-white/[0.07] text-[#3E4560] hover:text-[#EEEEFF] hover:bg-white/[0.08] disabled:opacity-25 disabled:cursor-not-allowed transition-all"
+              className={[
+                "w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center border transition-all",
+                currentVerse
+                  ? "bg-[#3D72F6]/20 border-[#3D72F6]/50 text-[#3D72F6] hover:bg-[#3D72F6]/30 hover:text-white shadow-[0_0_10px_rgba(61,114,246,0.3)]"
+                  : "bg-white/[0.04] border-white/[0.07] text-[#3E4560] hover:text-[#EEEEFF] hover:bg-white/[0.08] disabled:opacity-25 disabled:cursor-not-allowed",
+              ].join(" ")}
               title="Vers Vollbild"
             >
               <Maximize2 size={13} />

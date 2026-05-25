@@ -17,6 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
+      <head>
+        <link rel="preload" as="image" href="/images/timer-bg.jpg" />
+        <link rel="preload" as="image" href="/images/bible-bg.jpg" />
+      </head>
       <body>{children}</body>
     </html>
   );

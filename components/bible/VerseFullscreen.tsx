@@ -184,7 +184,7 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
   const currentIdx   = verseList.findIndex((v) => v.id === verse?.verseId);
   const hasPrev      = currentIdx > 0;
   const hasNext      = currentIdx >= 0 && currentIdx < verseList.length - 1;
-  const canTranslate = !!verse?.verseId && !!frBibleId;
+  const canTranslate = !!frBibleId;
   const displayText  = lang === "fr" ? frText : verse?.text;
   const showSpinner  = navigating || (lang === "fr" && frLoading && !frText);
 
@@ -206,37 +206,47 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
           {/* Content */}
           <div className="relative z-10 flex flex-col h-full">
 
-            {/* Top bar */}
-            <div className="flex items-center justify-between px-8 pt-7">
+            {/* Top bar — 3-col grid so nothing overlaps on any screen size */}
+            <div className="grid grid-cols-3 items-center px-4 sm:px-8 pt-5 sm:pt-7">
+
+              {/* Left: logo + name */}
               <motion.div
                 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 }}
-                className="flex items-center gap-3"
+                className="flex items-center gap-2 sm:gap-3 min-w-0"
               >
-                <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white p-1 sm:p-1.5 flex items-center justify-center shadow-lg flex-shrink-0">
                   <Image src="/images/feg_logo.png" alt="FEG Logo" width={30} height={30} className="object-contain" />
                 </div>
-                <div>
-                  <p className="text-base font-bold text-white leading-tight drop-shadow-sm">FEG le Rocher</p>
+                <div className="min-w-0">
+                  <p className="text-base font-bold text-white leading-tight drop-shadow-sm truncate">FEG le Rocher</p>
                   <p className="text-[10px] text-white/50 tracking-widest uppercase">Gottesdienst</p>
                 </div>
               </motion.div>
 
-              <motion.time
+              {/* Center: wall clock */}
+              <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.08 }}
-                className="absolute left-1/2 -translate-x-1/2 font-bold tabular-nums text-white/35 tracking-widest"
-                style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.8rem)" }}
+                className="flex justify-center"
               >
-                {wallTime}
-              </motion.time>
+                <time
+                  className="font-bold tabular-nums text-white/35 tracking-widest"
+                  style={{ fontSize: "clamp(0.85rem, 2.5vw, 1.8rem)" }}
+                >
+                  {wallTime}
+                </time>
+              </motion.div>
 
-              <button
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={onClose}
-                className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 text-white/60 hover:text-white hover:bg-white/20 backdrop-blur-sm transition-all"
-                title="Schließen (Esc)"
-              >
-                <X size={15} />
-              </button>
+              {/* Right: close button */}
+              <div className="flex justify-end">
+                <button
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={onClose}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center bg-white/10 border border-white/20 text-white/60 hover:text-white hover:bg-white/20 backdrop-blur-sm transition-all"
+                  title="Schließen (Esc)"
+                >
+                  <X size={15} />
+                </button>
+              </div>
             </div>
 
             {/* Verse area + side buttons */}
@@ -316,35 +326,49 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
                 </div>
 
                 {/* Translation label + DE/FR toggle + position */}
-                <div className="mt-10 flex items-center justify-center gap-4">
-                  <span className="text-sm tracking-[0.3em] uppercase text-white/35">
-                    {lang === "fr" ? frLabel : verse.translation}
-                  </span>
+                <div className="mt-8 sm:mt-10 flex flex-col items-center gap-3">
 
-                  {canTranslate && (
-                    <div className="flex items-center rounded-xl overflow-hidden border border-white/20 backdrop-blur-sm">
-                      {(["de", "fr"] as const).map((l) => (
-                        <button
-                          key={l}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => setLang(l)}
-                          className={[
-                            "px-3 py-1 text-xs font-bold tracking-widest uppercase transition-all",
-                            lang === l
-                              ? "bg-white/20 text-white"
-                              : "bg-transparent text-white/35 hover:text-white/60",
-                          ].join(" ")}
-                        >
-                          {l}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  {verseList.length > 0 && currentIdx >= 0 && (
-                    <span className="text-xs text-white/25 tabular-nums">
-                      {currentIdx + 1} / {verseList.length}
+                  {/* Row 1: translation label + DE/FR toggle */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm tracking-[0.3em] uppercase text-white/35">
+                      {lang === "fr" ? frLabel : verse.translation}
                     </span>
+
+                    {canTranslate && (
+                      <div className="flex items-center rounded-xl overflow-hidden border border-white/20 backdrop-blur-sm">
+                        {(["de", "fr"] as const).map((l) => (
+                          <button
+                            key={l}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => setLang(l)}
+                            className={[
+                              "px-4 py-1.5 text-xs font-bold tracking-widest uppercase transition-all",
+                              lang === l
+                                ? "bg-white/20 text-white"
+                                : "bg-transparent text-white/35 hover:text-white/60",
+                            ].join(" ")}
+                          >
+                            {l}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Row 2: verse position as a readable pill */}
+                  {verseList.length > 0 && currentIdx >= 0 && (
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="px-3 py-1 rounded-full text-[11px] font-semibold tabular-nums tracking-wide"
+                        style={{
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(255,255,255,0.15)",
+                          color: "rgba(255,255,255,0.5)",
+                        }}
+                      >
+                        Vers {currentIdx + 1} von {verseList.length}
+                      </span>
+                    </div>
                   )}
                 </div>
 
