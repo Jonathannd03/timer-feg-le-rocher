@@ -93,7 +93,7 @@ export function TimerFullscreen({ open, onClose }: Props) {
               >
                 <time
                   className="font-bold tabular-nums text-white/35 tracking-widest"
-                  style={{ fontSize: "clamp(0.85rem, 2.5vw, 1.8rem)" }}
+                  style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)" }}
                 >
                   {wallTime}
                 </time>
