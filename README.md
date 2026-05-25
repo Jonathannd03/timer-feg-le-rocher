@@ -1,4 +1,4 @@
-# FEG le Rocher — Gottesdienst Timer
+# FEG le Rocher Gottesdienst Timer
 
 A professional church service operator panel for **FEG le Rocher**. Built to run on a laptop during Sunday services — the operator controls the timer and Bible verses while the congregation sees the fullscreen view.
 

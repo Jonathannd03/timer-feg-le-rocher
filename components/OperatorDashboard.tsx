@@ -2,26 +2,42 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Info, List } from "lucide-react";
+import { Clock, Info, List, BookOpen, Maximize2, CheckCircle2 } from "lucide-react";
 import { useServiceStore } from "@/store/serviceStore";
 import { formatTime } from "@/lib/utils";
+import { useTimer } from "@/hooks/useTimer";
+import { useKeyboard } from "@/hooks/useKeyboard";
+import { useBroadcastSender } from "@/hooks/useBroadcast";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { LeftSidebar } from "@/components/layout/LeftSidebar";
 import { CenterPanel } from "@/components/layout/CenterPanel";
 import { RightSidebar } from "@/components/layout/RightSidebar";
 import { ProgramList } from "@/components/program/ProgramList";
+import { BibleModule } from "@/components/bible/BibleModule";
+import { VerseFullscreen } from "@/components/bible/VerseFullscreen";
 import type { ServiceSection, BibleVerse, TimerStatus } from "@/types";
 
-type MobileTab = "info" | "timer" | "program";
+type MobileTab = "info" | "timer" | "bibel" | "program";
 
 const tabs: { id: MobileTab; label: string; icon: React.ReactNode }[] = [
   { id: "info",    label: "Info",     icon: <Info size={18} /> },
   { id: "timer",   label: "Timer",    icon: <Clock size={18} /> },
+  { id: "bibel",   label: "Bibel",    icon: <BookOpen size={18} /> },
   { id: "program", label: "Programm", icon: <List size={18} /> },
 ];
 
 export function OperatorDashboard() {
-  const [mobileTab, setMobileTab] = useState<MobileTab>("timer");
+  const [mobileTab, setMobileTab]   = useState<MobileTab>("timer");
+  const [verseFs,   setVerseFs]     = useState(false);
+
+  // Hooks that must always run regardless of which tab is active
+  const timerStatus  = useServiceStore((s) => s.timerStatus);
+  const currentVerse = useServiceStore((s) => s.currentVerse);
+  useTimer();
+  useKeyboard();
+  useBroadcastSender();
+  useWakeLock(timerStatus === "running" || timerStatus === "overtime");
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#09090F] flex flex-col">
@@ -57,6 +73,43 @@ export function OperatorDashboard() {
                 <CenterPanel />
               </div>
             )}
+            {mobileTab === "bibel" && (
+              <div className="h-full flex flex-col overflow-hidden">
+                {/* Header — selected verse + fullscreen button */}
+                <div className="flex items-center justify-between px-4 pt-3 pb-2 flex-shrink-0">
+                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#3E4560]">
+                    Bibelvers
+                  </p>
+                  {currentVerse && (
+                    <div className="flex items-center gap-2 min-w-0 flex-1 mx-3">
+                      <CheckCircle2 size={11} className="text-[#22C55E] flex-shrink-0" />
+                      <span className="text-xs font-semibold text-[#E8A83A] truncate">
+                        {currentVerse.reference}
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setVerseFs(true)}
+                    disabled={!currentVerse}
+                    className={[
+                      "w-8 h-8 flex-shrink-0 rounded-xl flex items-center justify-center border transition-all",
+                      currentVerse && mobileTab === "bibel"
+                        ? "bg-[#3D72F6]/20 border-[#3D72F6]/50 text-[#3D72F6] hover:bg-[#3D72F6]/30 hover:text-white shadow-[0_0_10px_rgba(61,114,246,0.3)]"
+                        : "bg-white/[0.04] border-white/[0.07] text-[#3E4560] hover:text-[#EEEEFF] hover:bg-white/[0.08] disabled:opacity-25 disabled:cursor-not-allowed",
+                    ].join(" ")}
+                    title="Vers Vollbild"
+                  >
+                    <Maximize2 size={13} />
+                  </button>
+                </div>
+
+                {/* Bible module — takes all remaining space */}
+                <div className="flex-1 min-h-0 overflow-hidden px-4 pb-4">
+                  <BibleModule />
+                </div>
+              </div>
+            )}
+
             {mobileTab === "program" && (
               <div className="h-full overflow-hidden bg-white/[0.02] border border-white/[0.06]">
                 <ProgramList />
@@ -65,18 +118,41 @@ export function OperatorDashboard() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Bottom tab bar */}
-        <nav className="flex items-center border-t border-white/[0.06] bg-[#0F0F18] safe-area-pb">
+        {/* Verse fullscreen — available from Bibel tab on mobile */}
+        <VerseFullscreen open={verseFs} onClose={() => setVerseFs(false)} verse={currentVerse} />
+
+        {/* Hint strip — shown when a verse is active and user is not on Bibel tab */}
+        {currentVerse && mobileTab !== "bibel" && (
+          <button
+            onClick={() => setMobileTab("bibel")}
+            className="flex-shrink-0 flex items-center justify-between gap-2 px-4 py-2 border-t border-[#22C55E]/20 bg-[#22C55E]/[0.06] transition-colors active:bg-[#22C55E]/[0.12]"
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] animate-pulse flex-shrink-0" />
+              <span className="text-[11px] font-semibold text-[#22C55E] truncate">
+                {currentVerse.reference}
+              </span>
+            </div>
+            <span className="text-[10px] text-[#22C55E]/70 flex-shrink-0 tracking-wide">
+              Vollbild →
+            </span>
+          </button>
+        )}
+
+        {/* Bottom tab bar — flex-shrink-0 keeps it always visible */}
+        <nav className="flex-shrink-0 flex items-center border-t border-white/[0.06] bg-[#0F0F18]">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setMobileTab(tab.id)}
               className={[
-                "flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors",
+                "flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors relative",
                 mobileTab === tab.id ? "text-[#3D72F6]" : "text-[#3E4560]",
               ].join(" ")}
             >
-              {tab.icon}
+              <div className="relative">
+                {tab.icon}
+              </div>
               <span className="text-[9px] font-semibold tracking-wider uppercase">
                 {tab.label}
               </span>

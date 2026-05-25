@@ -79,8 +79,8 @@ export function TimerFullscreen({ open, onClose }: Props) {
                   <Image src="/images/feg_logo.png" alt="FEG" width={30} height={30} className="object-contain" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs sm:text-base font-bold text-white leading-tight truncate">FEG le Rocher</p>
-                  <p className="text-[9px] sm:text-[10px] text-white/45 tracking-widest uppercase">Gottesdienst</p>
+                  <p className="text-base font-bold text-white leading-tight truncate" style={{ textShadow: "0 1px 8px rgba(0,0,0,0.8)" }}>FEG le Rocher</p>
+                  <p className="text-[10px] text-white/50 tracking-widest uppercase">Gottesdienst</p>
                 </div>
               </motion.div>
 
