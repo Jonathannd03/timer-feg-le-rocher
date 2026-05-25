@@ -92,15 +92,15 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
           deCacheRef.current.set(v.id, text);
         } catch {}
       }
-      // French (only if FR Bible is known)
-      if (frBibleId && !frCacheRef.current.has(v.id)) {
+      // French — only prefetch if operator is already in FR mode
+      if (lang === "fr" && frBibleId && !frCacheRef.current.has(v.id)) {
         try {
           const text = await fetchVerseText(frBibleId, v.id);
           frCacheRef.current.set(v.id, text);
         } catch {}
       }
     });
-  }, [verse?.verseId, verse?.bibleId, verseList, frBibleId]);
+  }, [verse?.verseId, verse?.bibleId, verseList, frBibleId, lang]);
 
   // ── Load French text for current verse ───────────────────────────────────
   useEffect(() => {
@@ -230,7 +230,7 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
               >
                 <time
                   className="font-bold tabular-nums text-white/35 tracking-widest"
-                  style={{ fontSize: "clamp(0.85rem, 2.5vw, 1.8rem)" }}
+                  style={{ fontSize: "clamp(2.5rem, 5vw, 4rem)" }}
                 >
                   {wallTime}
                 </time>

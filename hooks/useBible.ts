@@ -159,7 +159,7 @@ export function useSearch() {
       } finally {
         setLoading(false);
       }
-    }, 500);
+    }, 1000);
   }, []);
 
   return { results, loading, total, search };
