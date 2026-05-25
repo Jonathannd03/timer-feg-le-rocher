@@ -21,9 +21,10 @@ export async function GET(req: NextRequest) {
     }));
     return NextResponse.json({ items, total: result.total ?? items.length });
   } catch (err) {
+    const isLimit = (err as Error).message === "RATE_LIMIT";
     return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 }
+      { error: isLimit ? "RATE_LIMIT" : (err as Error).message },
+      { status: isLimit ? 429 : 500 }
     );
   }
 }

@@ -7,9 +7,10 @@ export async function GET(req: NextRequest) {
     const bibles = await BibleApi.listBibles(language);
     return NextResponse.json(bibles.filter((b) => b.id));
   } catch (err) {
+    const isLimit = (err as Error).message === "RATE_LIMIT";
     return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 }
+      { error: isLimit ? "RATE_LIMIT" : (err as Error).message },
+      { status: isLimit ? 429 : 500 }
     );
   }
 }

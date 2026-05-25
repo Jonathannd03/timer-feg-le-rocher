@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, X, CheckCircle2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, X, CheckCircle2, Loader2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { useServiceStore } from "@/store/serviceStore";
 import { useBibles, useBooks, useChapters, useVerseList } from "@/hooks/useBible";
 
@@ -44,30 +44,38 @@ export function BibleModule() {
   useEffect(() => { setStep({ mode: "books" }); }, [bibleId]);
 
   // Data hooks
-  const { books,    loading: booksLoading    } = useBooks(bibleId);
+  const { books,    loading: booksLoading,    error: booksError    } = useBooks(bibleId);
 
   const filteredBooks = query.trim()
     ? books.filter((b) => b.name.toLowerCase().includes(query.trim().toLowerCase()))
     : books;
-  const { chapters, loading: chaptersLoading } = useChapters(
+  const { chapters, loading: chaptersLoading, error: chaptersError } = useChapters(
     bibleId,
     step.mode === "chapters" ? step.bookId : ""
   );
-  const { verses,   loading: versesLoading   } = useVerseList(
+  const { verses,   loading: versesLoading,   error: versesError   } = useVerseList(
     bibleId,
     step.mode === "verses" ? step.chapterId : ""
   );
 
+  const apiError = booksError ?? chaptersError ?? versesError;
+
   // Apply a verse (always fetches full text)
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<"RATE_LIMIT" | "ERROR" | null>(null);
 
   const applyVerse = async (verseId: string, reference: string) => {
     if (!bibleId) return;
     setApplyingId(verseId);
+    setApplyError(null);
     try {
       const res  = await fetch(`/api/bible/verse?bibleId=${bibleId}&verseId=${encodeURIComponent(verseId)}`);
+      if (res.status === 429) { setApplyError("RATE_LIMIT"); return; }
+      if (!res.ok) { setApplyError("ERROR"); return; }
       const data = await res.json();
       setVerse({ reference, text: (data.content as string).trim(), translation: bibleLabel, verseId, bibleId });
+    } catch {
+      setApplyError("ERROR");
     } finally {
       setApplyingId(null);
     }
@@ -114,6 +122,18 @@ export function BibleModule() {
           ))}
         </select>
       </div>
+
+      {/* ── API error banner ── */}
+      {(apiError ?? applyError) && (
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-500/[0.08] border border-red-500/20">
+          <AlertTriangle size={13} className="text-red-400 flex-shrink-0" />
+          <p className="text-[11px] text-red-400 leading-snug">
+            {(apiError ?? applyError) === "RATE_LIMIT"
+              ? "API-Limit erreicht. Bitte später erneut versuchen."
+              : "Verbindungsfehler. Bitte Seite neu laden."}
+          </p>
+        </div>
+      )}
 
       {/* ── Breadcrumb ── */}
       {step.mode !== "books" && (

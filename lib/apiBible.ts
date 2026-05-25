@@ -15,6 +15,7 @@ async function apiFetch<T>(path: string, params?: Record<string, string>): Promi
     headers: { "api-key": KEY },
     next: { revalidate: 3600 }, // cache 1h for static data
   });
+  if (res.status === 429) throw new Error("RATE_LIMIT");
   if (!res.ok) {
     throw new Error(`api.bible ${res.status}: ${path}`);
   }

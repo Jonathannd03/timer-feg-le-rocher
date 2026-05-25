@@ -41,6 +41,7 @@ interface SearchResult {
 
 async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
+  if (res.status === 429) throw new Error("RATE_LIMIT");
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.json() as Promise<T>;
 }
@@ -48,67 +49,74 @@ async function fetchJson<T>(url: string): Promise<T> {
 export function useBibles() {
   const [bibles, setBibles] = useState<BibleOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<"RATE_LIMIT" | "ERROR" | null>(null);
 
   useEffect(() => {
     fetchJson<BibleOption[]>("/api/bible/bibles")
       .then(setBibles)
-      .catch(console.error)
+      .catch((e: Error) => setError(e.message === "RATE_LIMIT" ? "RATE_LIMIT" : "ERROR"))
       .finally(() => setLoading(false));
   }, []);
 
-  return { bibles, loading };
+  return { bibles, loading, error };
 }
 
 export function useBooks(bibleId: string) {
   const [books, setBooks] = useState<BookOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<"RATE_LIMIT" | "ERROR" | null>(null);
 
   useEffect(() => {
     if (!bibleId) return;
     setLoading(true);
+    setError(null);
     fetchJson<BookOption[]>(`/api/bible/books?bibleId=${bibleId}`)
       .then(setBooks)
-      .catch(console.error)
+      .catch((e: Error) => setError(e.message === "RATE_LIMIT" ? "RATE_LIMIT" : "ERROR"))
       .finally(() => setLoading(false));
   }, [bibleId]);
 
-  return { books, loading };
+  return { books, loading, error };
 }
 
 export function useChapters(bibleId: string, bookId: string) {
   const [chapters, setChapters] = useState<ChapterOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<"RATE_LIMIT" | "ERROR" | null>(null);
 
   useEffect(() => {
     if (!bibleId || !bookId) return;
     setLoading(true);
+    setError(null);
     fetchJson<ChapterOption[]>(
       `/api/bible/chapters?bibleId=${bibleId}&bookId=${bookId}`
     )
       .then(setChapters)
-      .catch(console.error)
+      .catch((e: Error) => setError(e.message === "RATE_LIMIT" ? "RATE_LIMIT" : "ERROR"))
       .finally(() => setLoading(false));
   }, [bibleId, bookId]);
 
-  return { chapters, loading };
+  return { chapters, loading, error };
 }
 
 export function useVerseList(bibleId: string, chapterId: string) {
   const [verses, setVerses] = useState<VerseItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<"RATE_LIMIT" | "ERROR" | null>(null);
 
   useEffect(() => {
     if (!bibleId || !chapterId) return;
     setLoading(true);
+    setError(null);
     fetchJson<VerseItem[]>(
       `/api/bible/verses?bibleId=${bibleId}&chapterId=${chapterId}`
     )
       .then(setVerses)
-      .catch(console.error)
+      .catch((e: Error) => setError(e.message === "RATE_LIMIT" ? "RATE_LIMIT" : "ERROR"))
       .finally(() => setLoading(false));
   }, [bibleId, chapterId]);
 
-  return { verses, loading };
+  return { verses, loading, error };
 }
 
 export function useFetchVerse() {

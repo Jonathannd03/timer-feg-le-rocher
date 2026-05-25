@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Loader2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { useWallClock } from "@/hooks/useWallClock";
 import { useServiceStore } from "@/store/serviceStore";
 import type { BibleVerse } from "@/types";
@@ -44,6 +44,7 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
 
   // Current French text for the displayed verse
   const [frText, setFrText] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<"RATE_LIMIT" | "ERROR" | null>(null);
 
   // ── Fetch French Bible ID once ─────────────────────────────────────────────
   useEffect(() => {
@@ -63,9 +64,9 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
       .catch(() => {});
   }, []);
 
-  // ── Reset lang when fullscreen opens ──────────────────────────────────────
+  // ── Reset lang + errors when fullscreen opens ─────────────────────────────
   useEffect(() => {
-    if (open) { setLang("de"); setFrText(null); }
+    if (open) { setLang("de"); setFrText(null); setApiError(null); }
   }, [open]);
 
   // ── Fetch verse list for current chapter ──────────────────────────────────
@@ -120,7 +121,10 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
         frCacheRef.current.set(verse.verseId!, text);
         setFrText(text);
       })
-      .catch(() => setFrText(null))
+      .catch((e: Error) => {
+        setFrText(null);
+        setApiError(e.message === "RATE_LIMIT" ? "RATE_LIMIT" : "ERROR");
+      })
       .finally(() => setFrLoading(false));
   }, [lang, verse?.verseId, frBibleId]);
 
@@ -162,8 +166,8 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
         bibleId:     verse.bibleId,
       });
       if (lang === "fr") setFrText(frCacheRef.current.get(next.id) ?? null);
-    } catch {
-      // ignore
+    } catch (e) {
+      setApiError((e as Error).message === "RATE_LIMIT" ? "RATE_LIMIT" : "ERROR");
     } finally {
       setNavigating(false);
     }
@@ -248,6 +252,18 @@ export function VerseFullscreen({ open, onClose, verse }: Props) {
                 </button>
               </div>
             </div>
+
+            {/* API error banner */}
+            {apiError && (
+              <div className="mx-8 mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/25 backdrop-blur-sm">
+                <AlertTriangle size={13} className="text-red-400 flex-shrink-0" />
+                <p className="text-xs text-red-400">
+                  {apiError === "RATE_LIMIT"
+                    ? "API-Limit erreicht. Bitte später erneut versuchen."
+                    : "Verbindungsfehler. Bitte Seite neu laden."}
+                </p>
+              </div>
+            )}
 
             {/* Verse area + side buttons */}
             <div className="flex-1 flex items-center justify-center px-4 relative">
