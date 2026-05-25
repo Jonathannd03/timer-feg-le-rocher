@@ -13,9 +13,10 @@ export async function GET(req: NextRequest) {
     const filtered = chapters.filter((c) => !c.id.includes("intro"));
     return NextResponse.json(filtered);
   } catch (err) {
+    const isLimit = (err as Error).message === "RATE_LIMIT";
     return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 }
+      { error: isLimit ? "RATE_LIMIT" : (err as Error).message },
+      { status: isLimit ? 429 : 500 }
     );
   }
 }

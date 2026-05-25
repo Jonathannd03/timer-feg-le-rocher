@@ -14,9 +14,10 @@ export async function GET(req: NextRequest) {
     const verses = await BibleApi.listVerses(bibleId, chapterId);
     return NextResponse.json(verses);
   } catch (err) {
+    const isLimit = (err as Error).message === "RATE_LIMIT";
     return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 }
+      { error: isLimit ? "RATE_LIMIT" : (err as Error).message },
+      { status: isLimit ? 429 : 500 }
     );
   }
 }
